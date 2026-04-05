@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 @RestController
 @RequestMapping("/api/restaurants")
+@PreAuthorize("isAuthenticated()")
 public class RestaurantController {
 
     private final RestaurantService restaurantService;
@@ -60,6 +61,14 @@ public class RestaurantController {
             return ResponseEntity.ok(restaurantService.findByStatus(status));
 
         return ResponseEntity.ok(restaurantService.findAll());
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<RestaurantResponse>> search(
+            @RequestParam String q,
+            @RequestParam(required = false) String city) {
+
+        return ResponseEntity.ok(restaurantService.search(q, city));
     }
 
     // ================= UPDATE =================
