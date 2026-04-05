@@ -1,0 +1,161 @@
+{
+	"info": {
+		"_postman_id": "eatease-api-collection",
+		"name": "EatEase API",
+		"description": "EatEase Food Delivery - all endpoints. Run Auth first to set token and userId.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{"key": "baseUrl", "value": "http://localhost:8080"},
+		{"key": "token", "value": ""},
+		{"key": "userId", "value": ""},
+		{"key": "restaurantId", "value": "1"}
+	],
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "1. Register (run this first)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status is 200 or 201', function() { pm.expect(pm.response.code).to.be.oneOf([200, 201, 400]); });",
+									"if (pm.response.code === 200 || pm.response.code === 201) {",
+									"    try {",
+									"        var json = pm.response.json();",
+									"        if (json.token) pm.collectionVariables.set('token', json.token);",
+									"        if (json.userId) pm.collectionVariables.set('userId', String(json.userId));",
+									"    } catch (e) {}",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"email\": \"postman@test.com\", \"password\": \"test123\", \"name\": \"Postman User\", \"roles\": [\"CUSTOMER\"]}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/register",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "register"]
+						}
+					}
+				},
+				{
+					"name": "2. Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status is 200 on success', function() { pm.expect(pm.response.code).to.be.oneOf([200, 401]); });",
+									"if (pm.response.code === 200) {",
+									"    try {",
+									"        var json = pm.response.json();",
+									"        if (json.token) pm.collectionVariables.set('token', json.token);",
+									"        if (json.userId) pm.collectionVariables.set('userId', String(json.userId));",
+									"    } catch (e) {}",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [{"key": "Content-Type", "value": "application/json"}],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"email\": \"postman@test.com\", \"password\": \"test123\"}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "auth", "login"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{"name": "Get User by Id", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}], "url": {"raw": "{{baseUrl}}/api/users/1", "host": ["{{baseUrl}}"], "path": ["api", "users", "1"]}}},
+				{"name": "Get All Users (Admin)", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}], "url": {"raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"]}}},
+				{"name": "Get Users by Role", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}], "url": {"raw": "{{baseUrl}}/api/users/role/CUSTOMER", "host": ["{{baseUrl}}"], "path": ["api", "users", "role", "CUSTOMER"]}}},
+				{"name": "Update User", "request": {"method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"name\": \"Updated Name\"}"}, "url": {"raw": "{{baseUrl}}/api/users/1", "host": ["{{baseUrl}}"], "path": ["api", "users", "1"]}}},
+				{"name": "Delete User (Admin)", "request": {"method": "DELETE", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}], "url": {"raw": "{{baseUrl}}/api/users/99", "host": ["{{baseUrl}}"], "path": ["api", "users", "99"]}}},
+				{"name": "Pending Approval", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}], "url": {"raw": "{{baseUrl}}/api/users/pending-approval", "host": ["{{baseUrl}}"], "path": ["api", "users", "pending-approval"]}}},
+				{"name": "Approve User", "request": {"method": "PATCH", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}], "url": {"raw": "{{baseUrl}}/api/users/2/approve", "host": ["{{baseUrl}}"], "path": ["api", "users", "2", "approve"]}}},
+				{"name": "Revoke Approval", "request": {"method": "PATCH", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}], "url": {"raw": "{{baseUrl}}/api/users/2/revoke-approval", "host": ["{{baseUrl}}"], "path": ["api", "users", "2", "revoke-approval"]}}}
+			]
+		},
+		{
+			"name": "Restaurants",
+			"item": [
+				{"name": "Create Restaurant", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"name\": \"My Restaurant\", \"description\": \"Best food\", \"ownerId\": 1, \"address\": \"123 Main St\", \"city\": \"New York\", \"phone\": \"+1555123456\"}"}, "url": {"raw": "{{baseUrl}}/api/restaurants", "host": ["{{baseUrl}}"], "path": ["api", "restaurants"]}}},
+				{"name": "Get Restaurant by Id", "request": {"method": "GET", "url": {"raw": "{{baseUrl}}/api/restaurants/1", "host": ["{{baseUrl}}"], "path": ["api", "restaurants", "1"]}}},
+				{"name": "Get All Restaurants", "request": {"method": "GET", "url": {"raw": "{{baseUrl}}/api/restaurants", "host": ["{{baseUrl}}"], "path": ["api", "restaurants"]}}},
+				{"name": "Search Restaurants", "request": {"method": "GET", "url": {"raw": "{{baseUrl}}/api/restaurants/search?q=pizza&city=New%20York", "host": ["{{baseUrl}}"], "path": ["api", "restaurants", "search"], "query": [{"key": "q", "value": "pizza"}, {"key": "city", "value": "New York"}]}}},
+				{"name": "Update Restaurant", "request": {"method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"name\": \"Updated Name\", \"ownerId\": 1, \"city\": \"New York\"}"}, "url": {"raw": "{{baseUrl}}/api/restaurants/1", "host": ["{{baseUrl}}"], "path": ["api", "restaurants", "1"]}}},
+				{"name": "Approve Restaurant", "request": {"method": "PATCH", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}], "url": {"raw": "{{baseUrl}}/api/restaurants/1/status?status=APPROVED", "host": ["{{baseUrl}}"], "path": ["api", "restaurants", "1", "status"], "query": [{"key": "status", "value": "APPROVED"}]}}},
+				{"name": "Get Menu", "request": {"method": "GET", "url": {"raw": "{{baseUrl}}/api/restaurants/1/menus", "host": ["{{baseUrl}}"], "path": ["api", "restaurants", "1", "menus"]}}},
+				{"name": "Add Menu Item", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"name\": \"Pizza\", \"description\": \"Margherita\", \"price\": 12.50, \"available\": true}"}, "url": {"raw": "{{baseUrl}}/api/restaurants/1/menus", "host": ["{{baseUrl}}"], "path": ["api", "restaurants", "1", "menus"]}}},
+				{"name": "Get Menu Item", "request": {"method": "GET", "url": {"raw": "{{baseUrl}}/api/restaurants/menus/1", "host": ["{{baseUrl}}"], "path": ["api", "restaurants", "menus", "1"]}}},
+				{"name": "Update Menu Item", "request": {"method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"name\": \"Pizza Large\", \"price\": 14.00, \"available\": true}"}, "url": {"raw": "{{baseUrl}}/api/restaurants/menus/1", "host": ["{{baseUrl}}"], "path": ["api", "restaurants", "menus", "1"]}}},
+				{"name": "Delete Menu Item", "request": {"method": "DELETE", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}], "url": {"raw": "{{baseUrl}}/api/restaurants/menus/99", "host": ["{{baseUrl}}"], "path": ["api", "restaurants", "menus", "99"]}}},
+				{"name": "Add Review", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"restaurantId\": 1, \"rating\": 5, \"comment\": \"Great!\"}"}, "url": {"raw": "{{baseUrl}}/api/restaurants/reviews", "host": ["{{baseUrl}}"], "path": ["api", "restaurants", "reviews"]}}},
+				{"name": "Get Reviews", "request": {"method": "GET", "url": {"raw": "{{baseUrl}}/api/restaurants/1/reviews", "host": ["{{baseUrl}}"], "path": ["api", "restaurants", "1", "reviews"]}}},
+				{"name": "Delete Review", "request": {"method": "DELETE", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}], "url": {"raw": "{{baseUrl}}/api/restaurants/reviews/1", "host": ["{{baseUrl}}"], "path": ["api", "restaurants", "reviews", "1"]}}},
+				{"name": "Get All Reviews (Admin)", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}, {"key": "X-User-Roles", "value": "ADMIN"}], "url": {"raw": "{{baseUrl}}/api/restaurants/reviews", "host": ["{{baseUrl}}"], "path": ["api", "restaurants", "reviews"]}}}
+			]
+		},
+		{
+			"name": "Cart",
+			"item": [
+				{"name": "Get Cart", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}], "url": {"raw": "{{baseUrl}}/api/cart", "host": ["{{baseUrl}}"], "path": ["api", "cart"]}}},
+				{"name": "Add to Cart", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"menuItemId\": 1, \"quantity\": 2}"}, "url": {"raw": "{{baseUrl}}/api/cart/items", "host": ["{{baseUrl}}"], "path": ["api", "cart", "items"]}}},
+				{"name": "Update Cart Item", "request": {"method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}], "url": {"raw": "{{baseUrl}}/api/cart/items/1?quantity=3", "host": ["{{baseUrl}}"], "path": ["api", "cart", "items", "1"], "query": [{"key": "quantity", "value": "3"}]}}},
+				{"name": "Clear Cart", "request": {"method": "DELETE", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}], "url": {"raw": "{{baseUrl}}/api/cart", "host": ["{{baseUrl}}"], "path": ["api", "cart"]}}}
+			]
+		},
+		{
+			"name": "Orders",
+			"item": [
+				{"name": "Place Order", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"deliveryAddress\": \"456 Oak Ave, Apt 2\"}"}, "url": {"raw": "{{baseUrl}}/api/orders", "host": ["{{baseUrl}}"], "path": ["api", "orders"]}}},
+				{"name": "Get Order", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}], "url": {"raw": "{{baseUrl}}/api/orders/1", "host": ["{{baseUrl}}"], "path": ["api", "orders", "1"]}}},
+				{"name": "My Orders", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}], "url": {"raw": "{{baseUrl}}/api/orders/my", "host": ["{{baseUrl}}"], "path": ["api", "orders", "my"]}}},
+				{"name": "Restaurant Orders", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}, {"key": "X-Restaurant-Id", "value": "{{restaurantId}}"}], "url": {"raw": "{{baseUrl}}/api/orders/restaurant", "host": ["{{baseUrl}}"], "path": ["api", "orders", "restaurant"]}}},
+				{"name": "Update Order Status", "request": {"method": "PATCH", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}, {"key": "X-Restaurant-Id", "value": "{{restaurantId}}"}], "url": {"raw": "{{baseUrl}}/api/orders/1/status?status=CONFIRMED", "host": ["{{baseUrl}}"], "path": ["api", "orders", "1", "status"], "query": [{"key": "status", "value": "CONFIRMED"}]}}},
+				{"name": "All Orders (Admin)", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}, {"key": "X-User-Roles", "value": "ADMIN"}], "url": {"raw": "{{baseUrl}}/api/orders/admin/all", "host": ["{{baseUrl}}"], "path": ["api", "orders", "admin", "all"]}}},
+				{"name": "Orders by Status", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}], "url": {"raw": "{{baseUrl}}/api/orders/status/PENDING", "host": ["{{baseUrl}}"], "path": ["api", "orders", "status", "PENDING"]}}}
+			]
+		},
+		{
+			"name": "Payments",
+			"item": [
+				{"name": "Process Payment", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}, {"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"orderId\": 1, \"amount\": 29.97, \"paymentMethod\": \"CARD\"}"}, "url": {"raw": "{{baseUrl}}/api/payments", "host": ["{{baseUrl}}"], "path": ["api", "payments"]}}},
+				{"name": "Get Payment", "request": {"method": "GET", "url": {"raw": "{{baseUrl}}/api/payments/1", "host": ["{{baseUrl}}"], "path": ["api", "payments", "1"]}}},
+				{"name": "Get by Order", "request": {"method": "GET", "url": {"raw": "{{baseUrl}}/api/payments/order/1", "host": ["{{baseUrl}}"], "path": ["api", "payments", "order", "1"]}}},
+				{"name": "My Payments", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}], "url": {"raw": "{{baseUrl}}/api/payments/my", "host": ["{{baseUrl}}"], "path": ["api", "payments", "my"]}}},
+				{"name": "Payments by Status", "request": {"method": "GET", "url": {"raw": "{{baseUrl}}/api/payments/status/SUCCESS", "host": ["{{baseUrl}}"], "path": ["api", "payments", "status", "SUCCESS"]}}},
+				{"name": "All Payments (Admin)", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}, {"key": "X-User-Roles", "value": "ADMIN"}], "url": {"raw": "{{baseUrl}}/api/payments/admin/all", "host": ["{{baseUrl}}"], "path": ["api", "payments", "admin", "all"]}}}
+			]
+		},
+		{
+			"name": "Notifications",
+			"item": [
+				{"name": "Get Notifications", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}], "url": {"raw": "{{baseUrl}}/api/notifications?page=0&size=20", "host": ["{{baseUrl}}"], "path": ["api", "notifications"], "query": [{"key": "page", "value": "0"}, {"key": "size", "value": "20"}]}}},
+				{"name": "Unread Count", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "X-User-Id", "value": "{{userId}}"}], "url": {"raw": "{{baseUrl}}/api/notifications/unread-count", "host": ["{{baseUrl}}"], "path": ["api", "notifications", "unread-count"]}}}
+			]
+		}
+	]
+}

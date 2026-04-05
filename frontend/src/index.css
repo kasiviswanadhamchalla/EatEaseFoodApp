@@ -1,0 +1,31 @@
+:root {
+  --eatease-primary: #e85d04;
+  --eatease-dark: #370617;
+  --eatease-light: #fff5f0;
+}
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background-color: #f8f9fa;
+}
+.navbar-brand {
+  font-weight: 700;
+  color: var(--eatease-primary) !important;
+}
+.btn-primary {
+  background-color: var(--eatease-primary);
+  border-color: var(--eatease-primary);
+}
+.btn-primary:hover {
+  background-color: #d45303;
+  border-color: #d45303;
+}
+.card {
+  border: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  border-radius: 12px;
+}
+.card-img-top {
+  border-radius: 12px 12px 0 0;
+  height: 180px;
+  object-fit: cover;
+}

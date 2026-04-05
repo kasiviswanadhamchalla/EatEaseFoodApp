@@ -1,0 +1,147 @@
+================================================================================
+  EATEASE - HOW TO RUN THE APP AND CHECK ALL ENDPOINTS IN POSTMAN
+================================================================================
+
+PART 1: PREREQUISITES
+---------------------
+- Java 21, Maven 3.9+
+- MySQL 8 (root/root) with DBs: eatease_users, eatease_restaurants, eatease_orders, eatease_payments
+- MongoDB (localhost:27017) for notification-service
+- Kafka (localhost:9092)
+- Node 18+ (for frontend only; Postman testing does not need frontend)
+
+
+PART 2: START THE BACKEND (IN ORDER)
+-------------------------------------
+Open separate terminals. Run from project root: c:\Users\chari\EatEaseFoodApp
+
+1) Eureka (service discovery) - wait until it shows "Started EurekaServer"
+   mvn -pl eureka-server spring-boot:run
+
+2) API Gateway (single entry for all APIs)
+   mvn -pl api-gateway spring-boot:run
+
+3) Microservices (order does not matter after gateway)
+   mvn -pl user-service spring-boot:run
+   mvn -pl restaurant-service spring-boot:run
+   mvn -pl order-service spring-boot:run
+   mvn -pl payment-service spring-boot:run
+   mvn -pl notification-service spring-boot:run
+
+All APIs are exposed at:  http://localhost:8080
+
+
+PART 3: USE POSTMAN TO CHECK ALL ENDPOINTS
+------------------------------------------
+
+A) IMPORT THE COLLECTION
+   - In Postman: File -> Import -> Upload Files
+   - Select: EatEase_Postman_Collection.json (in project root)
+   - Collection "EatEase API" will appear with folders and requests
+
+B) SET COLLECTION VARIABLES (optional but recommended)
+   - Click the collection "EatEase API" -> Variables tab
+   - baseUrl = http://localhost:8080  (already set)
+   - token, userId, restaurantId can stay empty; they are set automatically when you run "Auth: Login" or "Auth: Register"
+
+C) RUN AUTH FIRST (to get JWT and user id)
+   - Run "Auth: Login" or "Auth: Register" once.
+   - Use Body for Login:  {"email":"admin@eatease.com","password":"Admin@123"}  (if you have admin user)
+   - Or Register:  {"email":"test@test.com","password":"test123","name":"Test User","roles":["CUSTOMER"]}
+   - The collection script will save "token" and "userId" into collection variables for other requests.
+
+D) RUN ALL REQUESTS IN ORDER (Collection Runner)
+   - Click the collection -> Run (or Collection Runner)
+   - Select "EatEase API", leave iterations at 1
+   - Click "Run EatEase API"
+   - Postman runs every request. Check the green/red indicators:
+     * Green = test passed (status code and any assertions)
+     * Red = failed (wrong status or assertion failed)
+   - Fix any red by checking: URL (baseUrl), headers (Authorization, X-User-Id, X-Restaurant-Id), and body for POST/PUT/PATCH.
+
+E) MANUAL CHECK (one by one)
+   - Expand each folder and send requests manually.
+   - For protected endpoints set Headers:
+     Authorization: Bearer {{token}}
+     X-User-Id: {{userId}}
+     X-Restaurant-Id: {{restaurantId}}   (only for order/restaurant owner endpoints)
+   - Expect:
+     * 200 OK / 201 Created / 204 No Content for success
+     * 400 for bad request, 401 unauthorized, 403 forbidden, 404 not found when applicable
+
+
+PART 4: QUICK REFERENCE - WHAT EACH REQUEST EXPECTS
+---------------------------------------------------
+
+Auth (no headers):
+  POST /api/auth/login     Body: {"email":"...","password":"..."}     -> 200, get token & userId
+  POST /api/auth/register  Body: {"email":"...","password":"...","name":"...","roles":["CUSTOMER"]}  -> 200
+
+Users (need JWT + X-User-Id; many need ADMIN role):
+  GET  /api/users/1        -> 200, one user
+  GET  /api/users          -> 200, list (ADMIN)
+  GET  /api/users/role/CUSTOMER  -> 200, list (ADMIN)
+  PUT  /api/users/1        Body: {email,name,phone,...}  -> 200
+  DELETE /api/users/1      -> 204 (ADMIN)
+  GET  /api/users/pending-approval  -> 200 (ADMIN)
+  PATCH /api/users/1/approve       -> 200 (ADMIN)
+  PATCH /api/users/1/revoke-approval -> 200 (ADMIN)
+
+Restaurants:
+  POST   /api/restaurants  Body: {name,ownerId,address,city,...}  Headers: X-User-Id  -> 201
+  GET    /api/restaurants/1   -> 200
+  GET    /api/restaurants     -> 200 (optional ?city= & ?status=APPROVED)
+  GET    /api/restaurants/search?q=pizza  -> 200
+  PUT    /api/restaurants/1   Body: same as create   Headers: X-User-Id  -> 200
+  PATCH  /api/restaurants/1/status?status=APPROVED   -> 200
+  GET    /api/restaurants/1/menus   -> 200, list of menu items
+  POST   /api/restaurants/1/menus   Body: {name,price,description,...}  X-User-Id  -> 201
+  GET    /api/restaurants/menus/1   -> 200
+  PUT    /api/restaurants/menus/1   Body: {name,price,...}  X-User-Id  -> 200
+  DELETE /api/restaurants/menus/1   X-User-Id  -> 204
+  POST   /api/restaurants/reviews   Body: {restaurantId,rating(1-5),comment}  X-User-Id  -> 201
+  GET    /api/restaurants/1/reviews -> 200
+  DELETE /api/restaurants/reviews/1  X-User-Id  -> 204
+  GET    /api/restaurants/reviews   X-User-Roles: ADMIN  -> 200
+
+Cart (X-User-Id required):
+  GET    /api/cart                    -> 200, cart with items
+  POST   /api/cart/items              Body: {menuItemId,quantity}  -> 200
+  PUT    /api/cart/items/1?quantity=2  -> 200
+  DELETE /api/cart                    -> 204
+
+Orders (X-User-Id; restaurant endpoints need X-Restaurant-Id):
+  POST   /api/orders        Body: {deliveryAddress}  -> 201
+  GET    /api/orders/1      -> 200
+  GET    /api/orders/my     -> 200
+  GET    /api/orders/restaurant   X-Restaurant-Id  -> 200
+  PATCH  /api/orders/1/status?status=CONFIRMED   X-Restaurant-Id  -> 200
+  GET    /api/orders/admin/all   X-User-Roles: ADMIN  -> 200
+  GET    /api/orders/status/PENDING   -> 200
+
+Payments (X-User-Id for /my):
+  POST   /api/payments   Body: {orderId,amount,paymentMethod}  -> 201
+  GET    /api/payments/1   -> 200
+  GET    /api/payments/order/1   -> 200
+  GET    /api/payments/my   -> 200
+  GET    /api/payments/status/SUCCESS   -> 200
+  GET    /api/payments/admin/all   X-User-Roles: ADMIN  -> 200
+
+Notifications (X-User-Id required):
+  GET    /api/notifications?page=0&size=20   -> 200
+  GET    /api/notifications/unread-count     -> 200, {"count":0}
+
+
+PART 5: EXPECTED STATUS CODES (SUCCESS)
+--------------------------------------
+POST (create)    -> 201 Created
+GET              -> 200 OK
+PUT / PATCH      -> 200 OK
+DELETE           -> 204 No Content
+
+If you get 401 -> add Authorization: Bearer <token> and X-User-Id.
+If you get 403 -> your user role is not allowed (e.g. ADMIN required).
+If you get 404 -> wrong ID or path.
+If you get 500 -> check backend logs and DB/Kafka/Mongo are running.
+
+================================================================================
