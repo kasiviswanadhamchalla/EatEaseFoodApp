@@ -85,7 +85,17 @@ public class UserServiceImpl implements UserService {
     public AuthResponse register(RegisterRequest request) {
 
         if (request.getRoles().contains(Role.CUSTOMER)) {
-            throw new BadRequestException("Customer registration requires OTP verification");
+
+            sendRegisterOtp(request.getEmail());
+
+            return new AuthResponse(
+                    null,
+                    request.getEmail(),
+                    null,
+                    List.of("OTP_SENT"),
+                    request.getName(),
+                    false
+            );
         }
 
         if (request.getRoles().contains(Role.ADMIN)) {
