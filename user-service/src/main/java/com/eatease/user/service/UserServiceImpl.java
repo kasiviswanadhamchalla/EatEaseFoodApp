@@ -78,7 +78,7 @@ public class UserServiceImpl implements UserService {
         return response;
     }
 
-    // ===================== NORMAL REGISTER (NON-CUSTOMER) =====================
+    // ===================== NORMAL REGISTER =====================
 
     @Override
     @Transactional
