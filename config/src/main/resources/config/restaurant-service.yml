@@ -2,6 +2,10 @@ server:
   port: 8082
 
 spring:
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
   datasource:
     url: jdbc:mysql://localhost:3306/eatease_restaurants?createDatabaseIfNotExist=true
     username: root

@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(name = "restaurant-service")
+@FeignClient(name = "restaurant-service", fallback = RestaurantSearchClientFallback.class)
 public interface RestaurantSearchClient {
 
     @GetMapping("/api/restaurants/search")

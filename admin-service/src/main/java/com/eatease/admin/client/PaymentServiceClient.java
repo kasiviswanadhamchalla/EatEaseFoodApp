@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import java.util.List;
 import java.util.Map;
 
-@FeignClient(name = "payment-service")
+@FeignClient(name = "payment-service", fallback = PaymentServiceClientFallback.class)
 public interface PaymentServiceClient {
 
     @GetMapping("/api/payments/admin/all")

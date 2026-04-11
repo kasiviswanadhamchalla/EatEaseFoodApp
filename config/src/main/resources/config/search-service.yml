@@ -28,3 +28,9 @@ management:
       probability: 1.0
     propagation:
       type: B3
+
+spring:
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true

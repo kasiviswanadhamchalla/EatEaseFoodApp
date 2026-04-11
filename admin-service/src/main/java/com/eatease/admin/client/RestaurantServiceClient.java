@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import java.util.List;
 import java.util.Map;
 
-@FeignClient(name = "restaurant-service")
+@FeignClient(name = "restaurant-service", fallback = RestaurantServiceClientFallback.class)
 public interface RestaurantServiceClient {
 
     @GetMapping("/api/restaurants")

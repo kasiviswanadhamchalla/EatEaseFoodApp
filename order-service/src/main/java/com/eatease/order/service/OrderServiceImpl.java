@@ -9,6 +9,8 @@ import com.eatease.order.dto.*;
 import com.eatease.order.entity.*;
 import com.eatease.order.repository.CartRepository;
 import com.eatease.order.repository.OrderRepository;
+import com.eatease.order.event.OrderEventPayload;
+import com.eatease.order.producer.OrderEventProducer;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,20 +19,23 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
+import java.util.stream.Collectors;
 @Service
 public class OrderServiceImpl implements OrderService {
 
     private final CartRepository cartRepository;
     private final OrderRepository orderRepository;
     private final RestaurantClient restaurantClient;
+    private final OrderEventProducer orderEventProducer;
 
     public OrderServiceImpl(CartRepository cartRepository,
                             OrderRepository orderRepository,
-                            RestaurantClient restaurantClient) {
+                            RestaurantClient restaurantClient,
+                            OrderEventProducer orderEventProducer) {
         this.cartRepository = cartRepository;
         this.orderRepository = orderRepository;
         this.restaurantClient = restaurantClient;
+        this.orderEventProducer = orderEventProducer;
     }
 
     // ================= ADD TO CART =================
@@ -183,6 +188,16 @@ public class OrderServiceImpl implements OrderService {
         cart.setRestaurantId(null);
         cartRepository.save(cart);
 
+        List<OrderEventPayload.OrderItemPayload> eventItems = order.getItems().stream()
+                .map(i -> new OrderEventPayload.OrderItemPayload(i.getMenuItemId(), i.getItemName(), i.getQuantity(), i.getSubtotal()))
+                .collect(Collectors.toList());
+
+        OrderEventPayload event = new OrderEventPayload(
+                order.getId(), order.getOrderNumber(), order.getCustomerId(), order.getRestaurantId(),
+                order.getStatus().name(), order.getDeliveryAddress(), order.getTotalAmount(), order.getCreatedAt(), eventItems
+        );
+        orderEventProducer.publish(event);
+
         return toOrderResponse(order);
     }
 
@@ -235,6 +250,16 @@ public class OrderServiceImpl implements OrderService {
 
         order.setStatus(status);
         orderRepository.save(order);
+
+        List<OrderEventPayload.OrderItemPayload> eventItems = order.getItems().stream()
+                .map(i -> new OrderEventPayload.OrderItemPayload(i.getMenuItemId(), i.getItemName(), i.getQuantity(), i.getSubtotal()))
+                .collect(Collectors.toList());
+
+        OrderEventPayload event = new OrderEventPayload(
+                order.getId(), order.getOrderNumber(), order.getCustomerId(), order.getRestaurantId(),
+                order.getStatus().name(), order.getDeliveryAddress(), order.getTotalAmount(), order.getCreatedAt(), eventItems
+        );
+        orderEventProducer.publish(event);
 
         return toOrderResponse(order);
     }
