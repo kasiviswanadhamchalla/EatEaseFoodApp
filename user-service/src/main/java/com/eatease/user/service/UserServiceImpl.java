@@ -87,14 +87,19 @@ public class UserServiceImpl implements UserService {
         if (request.getRoles().contains(Role.CUSTOMER)) {
 
             sendRegisterOtp(request.getEmail());
+            List<String> responseRoles = new ArrayList<>();
+            for (Role role : request.getRoles()) {
+                responseRoles.add(role.name());
+            }
 
             return new AuthResponse(
                     null,
                     request.getEmail(),
                     null,
-                    List.of("OTP_SENT"),
+                    responseRoles,
                     request.getName(),
-                    false
+                    false,
+                    "OTP_SENT"
             );
         }
 

@@ -2,20 +2,24 @@ package com.eatease.notification.service;
 
 import com.eatease.notification.document.NotificationDoc;
 import com.eatease.notification.dto.NotificationResponse;
+import com.eatease.notification.event.NotificationEventPayload;
+import com.eatease.notification.producer.NotificationEventProducer;
 import com.eatease.notification.repository.NotificationRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 @Service
 public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository repository;
+    private final NotificationEventProducer notificationEventProducer;
 
-    public NotificationServiceImpl(NotificationRepository repository) {
+    public NotificationServiceImpl(NotificationRepository repository,
+                                   NotificationEventProducer notificationEventProducer) {
         this.repository = repository;
+        this.notificationEventProducer = notificationEventProducer;
     }
 
     @Override
@@ -48,5 +52,10 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public long getUnreadCount(Long userId) {
         return repository.countByUserIdAndReadFalse(userId);
+    }
+
+    @Override
+    public void publish(NotificationEventPayload event) {
+        notificationEventProducer.publish(event);
     }
 }

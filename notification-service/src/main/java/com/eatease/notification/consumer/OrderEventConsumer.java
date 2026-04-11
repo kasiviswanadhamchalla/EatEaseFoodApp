@@ -1,8 +1,8 @@
 package com.eatease.notification.consumer;
 
-import com.eatease.notification.document.NotificationDoc;
+import com.eatease.notification.event.NotificationEventPayload;
 import com.eatease.notification.event.OrderEventPayload;
-import com.eatease.notification.repository.NotificationRepository;
+import com.eatease.notification.producer.NotificationEventProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -14,10 +14,10 @@ public class OrderEventConsumer {
     private static final Logger log =
             LoggerFactory.getLogger(OrderEventConsumer.class);
 
-    private final NotificationRepository notificationRepository;
+    private final NotificationEventProducer notificationEventProducer;
 
-    public OrderEventConsumer(NotificationRepository notificationRepository) {
-        this.notificationRepository = notificationRepository;
+    public OrderEventConsumer(NotificationEventProducer notificationEventProducer) {
+        this.notificationEventProducer = notificationEventProducer;
     }
 
     @KafkaListener(topics = "order-events", groupId = "notification-service")
@@ -32,8 +32,8 @@ public class OrderEventConsumer {
         // ---------- Customer Notification ----------
         String message = getCustomerMessage(status);
 
-        NotificationDoc customerNotification =
-                NotificationDoc.create(
+        NotificationEventPayload customerNotification =
+                new NotificationEventPayload(
                         event.getCustomerId(),
                         "ORDER_STATUS",
                         "Order " + event.getOrderNumber(),
@@ -41,13 +41,13 @@ public class OrderEventConsumer {
                         event.getOrderId().toString()
                 );
 
-        notificationRepository.save(customerNotification);
+        notificationEventProducer.publish(customerNotification);
 
         // ---------- Restaurant Notification ----------
         if ("PENDING".equals(status)) {
 
-            NotificationDoc restaurantNotification =
-                    NotificationDoc.create(
+            NotificationEventPayload restaurantNotification =
+                    new NotificationEventPayload(
                             event.getRestaurantId(),
                             "NEW_ORDER",
                             "New Order " + event.getOrderNumber(),
@@ -55,7 +55,7 @@ public class OrderEventConsumer {
                             event.getOrderId().toString()
                     );
 
-            notificationRepository.save(restaurantNotification);
+            notificationEventProducer.publish(restaurantNotification);
         }
     }
 

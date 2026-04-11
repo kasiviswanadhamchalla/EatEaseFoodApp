@@ -9,6 +9,7 @@ public class AuthResponse {
     private List<String> roles;
     private String name;
     private boolean approved;
+    private String message;
 
     public AuthResponse() {}
 
@@ -20,6 +21,17 @@ public class AuthResponse {
         this.roles = roles;
         this.name = name;
         this.approved = approved;
+    }
+
+    public AuthResponse(String token, String email, Long userId,
+                        List<String> roles, String name, boolean approved, String message) {
+        this.token = token;
+        this.email = email;
+        this.userId = userId;
+        this.roles = roles;
+        this.name = name;
+        this.approved = approved;
+        this.message = message;
     }
 
     // getters & setters
@@ -70,5 +82,9 @@ public class AuthResponse {
 
     public void setApproved(boolean approved) {
         this.approved = approved;
+    }
+
+    public String getMessage() {
+        return message;
     }
 }
